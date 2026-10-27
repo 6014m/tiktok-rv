@@ -931,7 +931,7 @@ patch_apk() {
 	local ZIPALIGN
 	ZIPALIGN=$(ls "$ANDROID_HOME"/build-tools/*/zipalign 2>/dev/null | sort -V | tail -1)
 	if [ -n "$ZIPALIGN" ]; then
-		"$ZIPALIGN" -p -f 4 "$unsigned_apk" "${unsigned_apk}.al" && mv -f "${unsigned_apk}.al" "$unsigned_apk"
+		"$ZIPALIGN" -P 16 -f 4 "$unsigned_apk" "${unsigned_apk}.al" && mv -f "${unsigned_apk}.al" "$unsigned_apk"
 	fi
 	pr "Signing with apksigner"
 	local OP

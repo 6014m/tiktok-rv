@@ -43,6 +43,9 @@ jobs:
           chmod +x build.sh bin/toml/tq-x86_64
           ./build.sh config.toml 2>&1 | tee full.log; test ${PIPESTATUS[0]} -eq 0
           ls -la build
+          ZA=$(ls $ANDROID_HOME/build-tools/*/zipalign | sort -V | tail -1)
+          $ZA -c -P 16 -v 4 build/*.apk | tail -3
+          java -jar bin/apksigner.jar verify --print-certs --min-sdk-version 24 build/*.apk | head -5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Post log on failure
