@@ -24,6 +24,8 @@ jobs:
           f=$(ls temp/*.apk | head -1)
           mv "$f" temp/com.zhiliaoapp.musically-46.2.3-all.apk
           ls -la temp
+          echo "Verifying stock APK integrity..."
+          unzip -tq temp/com.zhiliaoapp.musically-46.2.3-all.apk
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Build
