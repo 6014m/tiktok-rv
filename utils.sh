@@ -910,8 +910,10 @@ patch_apk() {
 	local tmp_files
 	tmp_files="$(pwd)/$(mktemp -d -p "$TEMP_DIR")"
 
-	local cmd="java -jar '$cli_jar' patch '$stock_input' -o '$patched_apk' -p '$patches_jar' --keystore=ks.keystore \
---keystore-entry-password=123456789 --keystore-password=123456789 --signer=jhc --keystore-entry-alias=jhc -t '$tmp_files' $patcher_args"
+	# Morphe's built-in signer rejects some of TikTok's native libs ("Malformed ZIP entry"),
+	# so patch unsigned and sign with apksigner afterwards.
+	local unsigned_apk="${patched_apk%.apk}-unsigned.apk"
+	local cmd="java -jar '$cli_jar' patch '$stock_input' -o '$unsigned_apk' -p '$patches_jar' --unsigned -t '$tmp_files' $patcher_args"
 
 	# TODO: remove this later
 	local cli_name
@@ -920,10 +922,20 @@ patch_apk() {
 
 	if [ "$OS" = Android ]; then cmd+=" --custom-aapt2-binary='${AAPT2}'"; fi
 	pr "$cmd"
-	if eval "$cmd"; then [ -f "$patched_apk" ]; else
-		rm "$patched_apk" 2>/dev/null || :
+	if ! eval "$cmd" || [ ! -f "$unsigned_apk" ]; then
+		rm "$unsigned_apk" 2>/dev/null || :
 		return 1
 	fi
+	pr "Signing with apksigner"
+	local OP
+	if ! OP=$(java -jar "$APKSIGNER" sign --ks ks.p12 --ks-pass pass:123456789 --key-pass pass:123456789 --ks-key-alias jhc \
+		--v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true \
+		--out "$patched_apk" "$unsigned_apk" 2>&1); then
+		epr "apksigner error: $OP"
+		return 1
+	fi
+	rm -f "$unsigned_apk" "${patched_apk}.idsig"
+	[ -f "$patched_apk" ]
 }
 
 check_sig() {
