@@ -1,8 +1,6 @@
 name: Build TikTok
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 
 permissions:
   contents: write
@@ -16,6 +14,15 @@ jobs:
           distribution: zulu
           java-version: 21
       - uses: actions/checkout@v4
+      - name: Fetch stock TikTok from the "stock" release
+        run: |
+          mkdir -p temp
+          gh release download stock -R ${{ github.repository }} -D temp --pattern "*.apk"
+          f=$(ls temp/*.apk | head -1)
+          mv "$f" temp/com.zhiliaoapp.musically-46.2.3-all.apk
+          ls -la temp
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Build
         run: |
           chmod +x build.sh bin/toml/tq-x86_64
