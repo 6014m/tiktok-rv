@@ -1,6 +1,9 @@
 name: Build TikTok
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['config.toml', '.github/**', 'build.sh', 'utils.sh', 'TRIGGER']
 
 permissions:
   contents: write
