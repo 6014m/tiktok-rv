@@ -928,6 +928,15 @@ patch_apk() {
 	fi
 	# TikTok ships lib/*/libAwebviewbytedance.so as an undecodable deflate stream on purpose;
 	# v1 (JAR) signing has to inflate every entry so it fails. v2/v3 only hash bytes.
+	# Those entries are deliberately non-inflatable in TikTok's own APK; Android 16's installer
+	# appears to reject the package over them, so drop them (nothing can load them anyway).
+	pr "Removing non-inflatable lib entries"
+	zip -d "$unsigned_apk" "lib/*/libAwebviewbytedance.so" || :
+	python3 - "$unsigned_apk" <<'PY'
+import sys, zipfile
+z = zipfile.ZipFile(sys.argv[1]); bad = z.testzip()
+print("post-strip testzip first bad entry:", bad)
+PY
 	local ZIPALIGN
 	ZIPALIGN=$(ls "$ANDROID_HOME"/build-tools/*/zipalign 2>/dev/null | sort -V | tail -1)
 	if [ -n "$ZIPALIGN" ]; then
