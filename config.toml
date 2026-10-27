@@ -1,0 +1,16 @@
+enable-magisk-update = false
+parallel-jobs = 1
+
+[TikTok]
+app-name = "TikTok"
+patches-source = "icysymmetra/tiktok-patches-for-morphe"
+cli-source = "MorpheApp/morphe-cli"
+rv-brand = "FeedFilter"
+build-mode = "apk"
+arch = "all"
+pkg-name = "com.zhiliaoapp.musically"
+direct-dlurl = "46.2.3=https://d.apkpure.com/b/APK/com.zhiliaoapp.musically?versionCode=2024602030"
+apkmirror-dlurl = "https://www.apkmirror.com/apk/tiktok-pte-ltd/tik-tok-including-musical-ly/"
+uptodown-dlurl = "https://tiktok.en.uptodown.com/android"
+apkcombo-dlurl = "https://apkcombo.com/tiktok/com.zhiliaoapp.musically"
+included-patches = "'SIM spoof' 'Hide floating promotions'"
