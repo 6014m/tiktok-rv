@@ -29,13 +29,17 @@ jobs:
       - name: Build
         run: |
           chmod +x build.sh bin/toml/tq-x86_64
-          ./build.sh config.toml
+          ./build.sh config.toml 2>&1 | tee full.log; test ${PIPESTATUS[0]} -eq 0
           ls -la build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build log
-        if: always()
-        run: cat build.md || true
+      - name: Post log on failure
+        if: failure()
+        run: |
+          { echo "Build failed. Last 120 lines:"; echo '```'; grep -v "^\s*$" full.log | tail -120 | cut -c1-400; echo '```'; } > err.md
+          gh api repos/${{ github.repository }}/commits/${{ github.sha }}/comments -F body=@err.md
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
