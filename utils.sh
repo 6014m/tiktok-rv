@@ -926,21 +926,17 @@ patch_apk() {
 		rm "$unsigned_apk" 2>/dev/null || :
 		return 1
 	fi
-	pr "Rebuilding lib/ from stock and aligning"
-	local fixed_apk="${patched_apk%.apk}-fixed.apk"
-	if ! python3 fixlibs.py "$stock_input" "$unsigned_apk" "$fixed_apk"; then epr "fixlibs failed"; return 1; fi
+	# TikTok ships lib/*/libAwebviewbytedance.so as an undecodable deflate stream on purpose;
+	# v1 (JAR) signing has to inflate every entry so it fails. v2/v3 only hash bytes.
 	local ZIPALIGN
 	ZIPALIGN=$(ls "$ANDROID_HOME"/build-tools/*/zipalign 2>/dev/null | sort -V | tail -1)
 	if [ -n "$ZIPALIGN" ]; then
-		"$ZIPALIGN" -p -f 4 "$fixed_apk" "$unsigned_apk" || { epr "zipalign failed"; return 1; }
-	else
-		mv -f "$fixed_apk" "$unsigned_apk"
+		"$ZIPALIGN" -p -f 4 "$unsigned_apk" "${unsigned_apk}.al" && mv -f "${unsigned_apk}.al" "$unsigned_apk"
 	fi
-	rm -f "$fixed_apk"
 	pr "Signing with apksigner"
 	local OP
 	if ! OP=$(java -jar "$APKSIGNER" sign --ks ks.p12 --ks-pass pass:123456789 --key-pass pass:123456789 --ks-key-alias jhc \
-		--v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true \
+		--min-sdk-version 24 --v1-signing-enabled false --v2-signing-enabled true --v3-signing-enabled true \
 		--out "$patched_apk" "$unsigned_apk" 2>&1); then
 		epr "apksigner error: $OP"
 		return 1
